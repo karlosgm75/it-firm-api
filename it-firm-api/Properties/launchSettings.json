@@ -14,7 +14,8 @@
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DB_CX": "server=database-1.cruhmrs4t2zi.us-east-1.rds.amazonaws.com;user=admin;password=admin123;database=empoyee_management"
       },
       "applicationUrl": "http://localhost:5048",
       "dotnetRunMessages": true

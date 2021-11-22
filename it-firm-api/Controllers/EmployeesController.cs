@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using it_firm_api.Domain.Entities;
 using it_firm_api.Persistence;
+using it_firm_api.Models;
+using Mapster;
+using BCrypt.Net;
 
 namespace it_firm_api.Controllers
 {
@@ -19,14 +22,14 @@ namespace it_firm_api.Controllers
 
         // GET: api/Employees
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetEmployees()
+        public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployees()
         {
-            return await _context.Employees.ToListAsync();
+            return await _context.Employees.ProjectToType<EmployeeResponseDto>().ToListAsync();
         }
 
         // GET: api/Employees/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Employee>> GetEmployee(Guid id)
+        public async Task<ActionResult<EmployeeResponseDto>> GetEmployee(Guid id)
         {
             var employee = await _context.Employees.FindAsync(id);
 
@@ -35,19 +38,28 @@ namespace it_firm_api.Controllers
                 return NotFound();
             }
 
-            return employee;
+            return employee.Adapt<EmployeeResponseDto>();
         }
 
         // PUT: api/Employees/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEmployee(Guid id, Employee employee)
+        public async Task<IActionResult> PutEmployee(Guid id, EmployeeRequestDto employeeDto)
         {
-            if (id != employee.Id)
-            {
-                return BadRequest();
-            }
 
+            var employee = await _context.Employees.FindAsync(id);
+            if (employee == null)
+            {
+                return NotFound();
+            }
+            if (employeeDto.Password != null)
+            {
+                employee.HashedPassword = BCrypt.Net.BCrypt.HashPassword(employeeDto.Password, SaltRevision.Revision2A);
+            }
+            employee.FistName = employeeDto.FistName ?? employee.FistName;
+            employee.LastName = employeeDto.LastName ?? employee.LastName;
+            employee.Email = employeeDto.Email ?? employee.Email;
+           
             _context.Entry(employee).State = EntityState.Modified;
 
             try
@@ -72,12 +84,14 @@ namespace it_firm_api.Controllers
         // POST: api/Employees
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
+        public async Task<ActionResult<EmployeeResponseDto>> PostEmployee(EmployeeRequestDto employeeDto)
         {
+            var employee = employeeDto.Adapt<Employee>();
+            employee.HashedPassword = BCrypt.Net.BCrypt.HashPassword(employeeDto.Password, SaltRevision.Revision2A);
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetEmployee", new { id = employee.Id }, employee);
+            return CreatedAtAction("GetEmployee", new { id = employee.Id }, employee.Adapt<EmployeeResponseDto>());
         }
 
         // DELETE: api/Employees/5
