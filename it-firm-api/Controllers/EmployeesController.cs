@@ -59,7 +59,7 @@ namespace it_firm_api.Controllers
             employee.FistName = employeeDto.FistName ?? employee.FistName;
             employee.LastName = employeeDto.LastName ?? employee.LastName;
             employee.Email = employeeDto.Email ?? employee.Email;
-           
+
             _context.Entry(employee).State = EntityState.Modified;
 
             try
